@@ -29,4 +29,7 @@ Route::middleware('jwt.auth')->group(function (){
 
     //reply
     Route::post('tweet/{id}/reply',[TweetController::class,'replyTweet']);
+
+    //get all repies
+    Route::get('tweet/{id}/replies',[TweetController::class,'getReplies']);
 });

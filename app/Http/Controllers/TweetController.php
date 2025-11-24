@@ -194,4 +194,18 @@ class TweetController extends Controller
             'reply'=>$reply,
         ],201);
     }
+
+    //get all replies
+    public function getReplies($id){
+        $parentTweet=Tweet::findOrFail($id);
+
+        //all replies
+        $replies=Tweet::where('parent_tweet_id',$id)->with(['user'])->orderBy('created_at','DESC')->get();
+
+        return response()->json([
+            'parent_tweet_id'=>$id,
+            'total_replies'=>$replies->count(),
+            "replies"=>$replies
+        ]);
+    }
 }
