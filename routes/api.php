@@ -26,4 +26,7 @@ Route::middleware('jwt.auth')->group(function (){
 
     //repost
     Route::post('/tweet/{id}/repost',[TweetController::class,'retweet']);
+
+    //reply
+    Route::post('tweet/{id}/reply',[TweetController::class,'replyTweet']);
 });

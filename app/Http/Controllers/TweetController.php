@@ -36,7 +36,7 @@ class TweetController extends Controller
         $tweet=Tweet::create([
             'user_id'=>Auth::id(),
             'content'=>$request->content,
-            'media_url'=>$request->media_url,
+            'media_url'=>$mediaUrl,
             'media_type'=>$request->media_type,
             'parent_tweet_id'=>$request->parent_tweet_id,
             'visibility'=>$request->visibility ?? 'public',
@@ -138,5 +138,60 @@ class TweetController extends Controller
         $tweet->increment('repost_count');
 
         return response()->json(['message'=>'Tweet Resposted']);
+    }
+
+    //reply to the tweet
+    public function replyTweet(Request $request,$id){
+        //check if the tweet to whom we have to reply exist or not
+        $parentTweet=Tweet::findOrFail($id);
+
+        $request->validate([
+            'content'=>'required_without:media|string|max:280',
+            'media'=>'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,webm|max:20480',
+        ]);
+        $mediaUrl=null;
+        $mediaType=null;
+        //file upload
+
+        if($request->hasFile('media')){
+            $file=$request->file('media');
+
+            //store file
+            $path=$file->store('public/tweets');
+            $mediaUrl=str_replace('public/','storage/',$path);
+
+            $mime=$file->getMimeType();
+
+            if(str_starts_with($mime,'image/')){
+
+                $mediaType=$file->getClientOriginalExtension()==='gif'?'gif':'image';
+            }elseif(str_starts_with($mime,'video/')){
+                $mediaType='video';
+            }
+        }
+
+        //create reply tweet
+        $reply=Tweet::create([
+            'user_id'=>Auth::id(),
+            'content'=>$request->content,
+            'media_url'=>$mediaUrl,
+            'media_type'=>$mediaType,
+            'parent_tweet_id'=>$id,
+            'visibility'=>'public',
+            'can_reply'=> 'everyone',
+            'like_count'=>0,
+            'repost_count'=>0,
+            'comment_count'=>0,
+            'view_count'=>0
+        ]);
+
+        $parentTweet->increment('comment_count');
+
+        $reply->load(['user','parentTweet']);
+
+        return response()->json([
+            'message'=>'Reply posted successfully',
+            'reply'=>$reply,
+        ],201);
     }
 }
