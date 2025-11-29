@@ -32,4 +32,12 @@ Route::middleware('jwt.auth')->group(function (){
 
     //get all repies
     Route::get('tweet/{id}/replies',[TweetController::class,'getReplies']);
+
+    //update tweet
+    Route::put('tweet/{id}/update',[TweetController::class,'editTweet']);
+
+    //bookmark
+    Route::post('/tweet/{id}/bookmark',[TweetController::class,'bookmarkTweet']);
+    Route::delete('/tweet/{id}/bookmark',[TweetController::class,'removeBookmark']);
+    Route::get('/bookmarks',[TweetController::class,'getBookmarks']);
 });

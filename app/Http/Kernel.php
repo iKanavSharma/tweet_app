@@ -6,6 +6,10 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
 {
+    /**
+     * Global HTTP middleware stack.
+     * These run during every request.
+     */
     protected $middleware = [
         \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         \Illuminate\Http\Middleware\TrustProxies::class,
@@ -16,10 +20,12 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
     ];
 
+    /**
+     * Middleware groups
+     */
     protected $middlewareGroups = [
         'web' => [
-            \Illuminate\Session\Middleware\StartSession::class,
-            \App\Http\Middleware\EncryptCookies::class,
+            // EMPTY because you are not using sessions, csrf, or blade
         ],
 
         'api' => [
@@ -28,10 +34,16 @@ class Kernel extends HttpKernel
         ],
     ];
 
-    protected $routeMiddleware = [
-    'auth' => \App\Http\Middleware\Authenticate::class,
-    'jwt.auth' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
-    'jwt.refresh' => \Tymon\JWTAuth\Http\Middleware\RefreshToken::class,
+    /**
+     * Route middleware
+     * Register custom middlewares here
+     */
+    
+        protected $routeMiddleware = [
+        'auth' => \App\Http\Middleware\Authenticate::class,
+        'jwt.auth' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
+        'jwt.refresh' => \Tymon\JWTAuth\Http\Middleware\RefreshToken::class,
     ];
+
 
 }

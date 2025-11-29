@@ -78,6 +78,14 @@ class TweetController extends Controller
             return response()->json(['error'=>'Unauthorized Access'],403);
         }
 
+        //if tweet is reply so derement count 
+        if($tweet->parent_tweet_id){
+            $parent=Tweet::find($tweet->parent_tweet_id);
+            if($parent){
+                $parent->decrement('comment_count');
+            }
+        }
+
         $tweet->delete();
 
         return response()->json(['message'=>'Tweet Deleted Successfully']);
@@ -208,4 +216,96 @@ class TweetController extends Controller
             "replies"=>$replies
         ]);
     }
+
+    //edit tweet
+    public function editTweet(Request $request,$id){
+        $tweet=Tweet::findOrFail($id);
+
+        //tweet does not match with authorised user
+        if($tweet->user_id!==Auth::id()){
+            return response()->json(['error'=>'Unauthorized Access'],403);
+        }
+
+        $request->validate([
+            'content'=>'required_without:media|string|max:280',
+            'media'=>'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,webm|max:20480',
+        ]);
+
+        $mediaUrl=$tweet->media_url;
+        $mediaType=$tweet->media_type;
+
+        if($request->hasFile('media')){
+            $file=$request->file('media');
+            $path=$file->store('public/tweets');
+
+            $mediaUrl=str_replace('public/','storage/',$path);
+
+            $mime=$file->getMimeType();
+            if(str_starts_with($mime,'image/')){
+                $mediaType=$file->getClientOriginalExtension()==='gif'?'gif':'image';
+            }elseif(str_starts_with($mime,'video/')){
+                $mediaType='video';
+            }
+        }
+
+        //update tweet
+        $tweet->update([
+            'content'=>$request->content,
+            'media_url'=>$mediaUrl,
+            'media_type'=>$mediaType,
+        ]);
+
+        return response()->json([
+            'message'=>'Tweet edited Successfully',
+            'tweet'=>$tweet
+        ]);
+
+    }
+
+    
+    //bookmark
+    public function bookmarkTweet($id){
+        $tweet = Tweet::findOrFail($id);
+
+        // Check if already bookmarked
+        if (\DB::table('bookmarks')->where('user_id', Auth::id())->where('tweet_id', $id)->exists()) {
+            return response()->json(['message' => 'Already bookmarked'], 409);
+        }
+
+        \DB::table('bookmarks')->insert([
+            'user_id' => Auth::id(),
+            'tweet_id' => $id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Tweet bookmarked successfully']);
+    }
+
+    //remove bookmark
+    public function removeBookmark($id){
+        $deleted = \DB::table('bookmarks')
+            ->where('user_id', Auth::id())
+            ->where('tweet_id', $id)
+            ->delete();
+
+        if(!$deleted){
+            return response()->json(['message' => 'Bookmark not found'], 404);
+        }
+
+        return response()->json(['message' => 'Bookmark removed successfully']);
+    }
+
+
+    //get all bookmark
+    public function getBookmarks(){
+        $bookmarkedTweets = Tweet::whereIn('id', function($query){
+            $query->select('tweet_id')
+                ->from('bookmarks')
+                ->where('user_id', Auth::id());
+        })->with(['user','replies'])->orderBy('created_at','DESC')->get();
+
+        return response()->json($bookmarkedTweets);
+    }
+
 }
