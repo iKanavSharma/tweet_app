@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TweetController;
+use App\Http\Controllers\FollowController;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API working']);
@@ -40,4 +41,10 @@ Route::middleware('jwt.auth')->group(function (){
     Route::post('/tweet/{id}/bookmark',[TweetController::class,'bookmarkTweet']);
     Route::delete('/tweet/{id}/bookmark',[TweetController::class,'removeBookmark']);
     Route::get('/bookmarks',[TweetController::class,'getBookmarks']);
+
+    //folow system
+    Route::post('/follow/{id}', [FollowController::class, 'follow']);
+    Route::post('/unfollow/{id}', [FollowController::class, 'unfollow']);
+    Route::get('/followers/{id}', [FollowController::class, 'followers']);
+    Route::get('/following/{id}', [FollowController::class, 'following']);
 });
